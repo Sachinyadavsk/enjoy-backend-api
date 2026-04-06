@@ -2,30 +2,29 @@ import GallerySlider from "../models/GallerySlider.js";
 import multer from "multer";
 import fs from "fs";
 
-
-// ✅ Ensure directory exists
-const uploadDir = "sliders/";
+// ✅ Ensure upload folder exists
+const uploadDir = "uploads/sliders/";
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-// ✅ Multer storage config
+// ✅ Multer storage
 const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
+    destination: (req, file, cb) => {
         cb(null, uploadDir);
     },
-    filename: function (req, file, cb) {
+    filename: (req, file, cb) => {
         const fileName = Date.now() + "_" + file.originalname;
         cb(null, fileName);
     }
 });
 
-// ✅ File filter (only images)
+// ✅ File filter
 const fileFilter = (req, file, cb) => {
     if (file.mimetype.startsWith("image/")) {
         cb(null, true);
     } else {
-        cb(new Error("Only image files allowed"), false);
+        cb(new Error("Only images allowed"), false);
     }
 };
 
@@ -33,10 +32,10 @@ const fileFilter = (req, file, cb) => {
 export const upload = multer({
     storage,
     fileFilter,
-    limits: { fileSize: 2 * 1024 * 1024 } // 2MB limit
+    limits: { fileSize: 2 * 1024 * 1024 }
 });
 
-// ✅ Create Slider
+// ✅ Create Slider (SAVE FULL URL)
 export const createSlider = async (req, res) => {
     try {
         if (!req.file) {
@@ -46,22 +45,22 @@ export const createSlider = async (req, res) => {
             });
         }
 
-        // ✅ Create full URL
+        // ✅ Dynamic base URL
         const baseUrl = `${req.protocol}://${req.get("host")}`;
+
+        // ✅ Final URL format
         const imageUrl = `${baseUrl}/sliders/${req.file.filename}`;
 
         const slider = new GallerySlider({
-            cate_id: req.body.cate_id,
-            uid: req.body.uid,
-            url_slider: imageUrl,
-            slider_type: req.body.slider_type,
-            photo: req.file.path
+            title: req.body.title,
+            photo: imageUrl
         });
+
         const saved = await slider.save();
 
         res.status(201).json({
             success: true,
-            message: "Slider created",
+            message: "Slider created successfully",
             data: saved
         });
 
