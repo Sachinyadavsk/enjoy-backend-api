@@ -2,29 +2,30 @@ import GallerySlider from "../models/GallerySlider.js";
 import multer from "multer";
 import fs from "fs";
 
-// ✅ Ensure upload folder exists
-const uploadDir = "uploads/sliders/";
+
+// ✅ Ensure directory exists
+const uploadDir = "sliders/";
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-// ✅ Multer storage
+// ✅ Multer storage config
 const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
+    destination: function (req, file, cb) {
         cb(null, uploadDir);
     },
-    filename: (req, file, cb) => {
+    filename: function (req, file, cb) {
         const fileName = Date.now() + "_" + file.originalname;
         cb(null, fileName);
     }
 });
 
-// ✅ File filter
+// ✅ File filter (only images)
 const fileFilter = (req, file, cb) => {
     if (file.mimetype.startsWith("image/")) {
         cb(null, true);
     } else {
-        cb(new Error("Only images allowed"), false);
+        cb(new Error("Only image files allowed"), false);
     }
 };
 
@@ -32,10 +33,10 @@ const fileFilter = (req, file, cb) => {
 export const upload = multer({
     storage,
     fileFilter,
-    limits: { fileSize: 2 * 1024 * 1024 }
+    limits: { fileSize: 2 * 1024 * 1024 } // 2MB limit
 });
 
-// ✅ Create Slider (SAVE FULL URL)
+// ✅ Create Slider
 export const createSlider = async (req, res) => {
     try {
         if (!req.file) {
@@ -44,23 +45,20 @@ export const createSlider = async (req, res) => {
                 message: "Image is required"
             });
         }
-
-        // ✅ Dynamic base URL
-        const baseUrl = `${req.protocol}://${req.get("host")}`;
-
-        // ✅ Final URL format
-        const imageUrl = `${baseUrl}/sliders/${req.file.filename}`;
+        
 
         const slider = new GallerySlider({
-            title: req.body.title,
-            photo: imageUrl
+            cate_id: req.body.cate_id,
+            uid: req.body.uid,
+            url_slider: req.body.url_slider,
+            slider_type: req.body.slider_type,
+            photo: req.file.path
         });
-
         const saved = await slider.save();
 
         res.status(201).json({
             success: true,
-            message: "Slider created successfully",
+            message: "Slider created",
             data: saved
         });
 
