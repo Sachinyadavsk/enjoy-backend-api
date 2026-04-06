@@ -2,30 +2,29 @@ import GallerySlider from "../models/GallerySlider.js";
 import multer from "multer";
 import fs from "fs";
 
-
-// ✅ Ensure directory exists
-const uploadDir = "sliders/";
+// ✅ Create upload folder if not exists
+const uploadDir = "uploads/sliders/";
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-// ✅ Multer storage config
+// ✅ Multer config
 const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
+    destination: (req, file, cb) => {
         cb(null, uploadDir);
     },
-    filename: function (req, file, cb) {
+    filename: (req, file, cb) => {
         const fileName = Date.now() + "_" + file.originalname;
         cb(null, fileName);
     }
 });
 
-// ✅ File filter (only images)
+// ✅ File filter
 const fileFilter = (req, file, cb) => {
     if (file.mimetype.startsWith("image/")) {
         cb(null, true);
     } else {
-        cb(new Error("Only image files allowed"), false);
+        cb(new Error("Only images allowed"), false);
     }
 };
 
@@ -33,32 +32,46 @@ const fileFilter = (req, file, cb) => {
 export const upload = multer({
     storage,
     fileFilter,
-    limits: { fileSize: 2 * 1024 * 1024 } // 2MB limit
+    limits: { fileSize: 2 * 1024 * 1024 }
 });
 
-// ✅ Create Slider
+// ✅ Create Slider (UPLOAD + URL SUPPORT)
 export const createSlider = async (req, res) => {
     try {
-        if (!req.file) {
+        let photoUrl = "";
+
+        // ✅ Case 1: File Upload
+        if (req.file) {
+            const baseUrl = `${req.protocol}://${req.get("host")}`;
+            photoUrl = `${baseUrl}/sliders/${req.file.filename}`;
+        }
+
+        // ✅ Case 2: Direct URL
+        else if (req.body.photo) {
+            photoUrl = req.body.photo;
+        }
+
+        // ❌ No image
+        else {
             return res.status(400).json({
                 success: false,
                 message: "Image is required"
             });
         }
-        
 
         const slider = new GallerySlider({
             cate_id: req.body.cate_id,
             uid: req.body.uid,
             url_slider: req.body.url_slider,
             slider_type: req.body.slider_type,
-            photo: req.file.path
+            photo: photoUrl
         });
+
         const saved = await slider.save();
 
         res.status(201).json({
             success: true,
-            message: "Slider created",
+            message: "Slider created successfully",
             data: saved
         });
 
@@ -169,14 +182,28 @@ export const updateSlider = async (req, res) => {
 // ✅ Delete Slider
 export const deleteSlider = async (req, res) => {
     try {
-        const deleted = await GallerySlider.findByIdAndDelete(req.params.id);
+        const slider = await GallerySlider.findById(req.params.id);
 
-        if (!deleted) {
+        if (!slider) {
             return res.status(404).json({
                 success: false,
                 message: "Slider not found"
             });
         }
+
+        // ✅ Delete file if stored locally
+        if (slider.photo.includes("/sliders/")) {
+            const filePath = slider.photo.replace(
+                `${req.protocol}://${req.get("host")}/sliders/`,
+                "uploads/sliders/"
+            );
+
+            if (fs.existsSync(filePath)) {
+                fs.unlinkSync(filePath);
+            }
+        }
+
+        await slider.deleteOne();
 
         res.json({
             success: true,
