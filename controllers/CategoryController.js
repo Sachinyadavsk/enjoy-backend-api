@@ -124,6 +124,6 @@ export const deleteCategory = async (req, res) => {
 };
 
 export const getCategoriesmenu = async (req, res) => {
-  const categories = await Category.find().sort({ category_order: 1 }).orderBy("id","desc");
+  const categories = await Category.find().sort({ category_order: 1 });
   res.json(categories);
 };
