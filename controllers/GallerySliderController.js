@@ -48,7 +48,7 @@ export const createSlider = async (req, res) => {
 
         // ✅ Create full URL
         const baseUrl = `${req.protocol}://${req.get("host")}`;
-        const imageUrl = `${baseUrl}/uploads/sliders/${req.file.filename}`;
+        const imageUrl = `${baseUrl}/sliders/${req.file.filename}`;
 
         const slider = new GallerySlider({
             cate_id: req.body.cate_id,

@@ -22,7 +22,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 // serve uploaded images
-app.use("/uploads", express.static("uploads"));
+app.use("/sliders", express.static("sliders"));
 
 
 const PORT = process.env.PORT || 3000;
