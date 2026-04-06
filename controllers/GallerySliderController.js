@@ -46,10 +46,14 @@ export const createSlider = async (req, res) => {
             });
         }
 
+        // ✅ Create full URL
+        const baseUrl = `${req.protocol}://${req.get("host")}`;
+        const imageUrl = `${baseUrl}/uploads/sliders/${req.file.filename}`;
+
         const slider = new GallerySlider({
             cate_id: req.body.cate_id,
             uid: req.body.uid,
-            url_slider: req.body.url_slider,
+            url_slider: imageUrl,
             slider_type: req.body.slider_type,
             photo: req.file.path
         });
