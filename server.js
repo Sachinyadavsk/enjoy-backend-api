@@ -21,6 +21,8 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+// serve uploaded images
+app.use("/uploads", express.static("uploads"));
 
 
 const PORT = process.env.PORT || 3000;

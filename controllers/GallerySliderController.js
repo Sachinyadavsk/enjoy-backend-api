@@ -1,9 +1,58 @@
 import GallerySlider from "../models/GallerySlider.js";
+import multer from "multer";
+import fs from "fs";
+
+
+// ✅ Ensure directory exists
+const uploadDir = "sliders/";
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// ✅ Multer storage config
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, uploadDir);
+    },
+    filename: function (req, file, cb) {
+        const fileName = Date.now() + "_" + file.originalname;
+        cb(null, fileName);
+    }
+});
+
+// ✅ File filter (only images)
+const fileFilter = (req, file, cb) => {
+    if (file.mimetype.startsWith("image/")) {
+        cb(null, true);
+    } else {
+        cb(new Error("Only image files allowed"), false);
+    }
+};
+
+// ✅ Upload middleware
+export const upload = multer({
+    storage,
+    fileFilter,
+    limits: { fileSize: 2 * 1024 * 1024 } // 2MB limit
+});
 
 // ✅ Create Slider
 export const createSlider = async (req, res) => {
     try {
-        const slider = new GallerySlider(req.body);
+        if (!req.file) {
+            return res.status(400).json({
+                success: false,
+                message: "Image is required"
+            });
+        }
+
+        const slider = new GallerySlider({
+            cate_id: req.body.cate_id,
+            uid: req.body.uid,
+            url_slider: req.body.url_slider,
+            slider_type: req.body.slider_type,
+            photo: req.file.path
+        });
         const saved = await slider.save();
 
         res.status(201).json({
