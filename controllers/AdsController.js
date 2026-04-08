@@ -1,30 +1,64 @@
 import Ads from "../models/AdsModel.js";
+import multer from "multer";
+import path from "path";
+
+// ✅ Storage Config
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        if (file.fieldname === "banner_image") {
+            cb(null, "uploads/banner_image/");
+        }
+    },
+    filename: (req, file, cb) => {
+        const ext = path.extname(file.originalname);
+        const name = Date.now() + "-" + file.fieldname + ext;
+        cb(null, name);
+    }
+});
+
+// ✅ File Filter
+const fileFilter = (req, file, cb) => {
+    if (file.fieldname === "banner_image" && !file.mimetype.startsWith("image/")) {
+        return cb(new Error("Only image allowed"), false);
+    }
+    cb(null, true);
+};
+
+// ✅ Multer Upload
+export const upload = multer({
+    storage,
+    limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
+    fileFilter
+});
 
 // ✅ Create Ad
+
+
 export const createAd = async (req, res) => {
     try {
-        const ad = new Ads({
-            id: req.body.id,
-            add_placement: req.body.add_placement,
-            addSize: req.body.addSize,
-            click: req.body.click,
-            banner_image: req.body.banner_image,
-            status: req.body.status
-        });
+        let body = { ...req.body };
 
-        const savedAd = await ad.save();
+        if (req.files) {
+            const baseUrl = req.protocol + "://" + req.get("host");
 
+            if (req.files.banner_image) {
+                body.banner_image =
+                    baseUrl + "/" + req.files.banner_image[0].path.replace(/\\/g, "/");
+            }
+        }
+
+        const ad = new Ads(body);
+        const saved = await ad.save();
         res.status(201).json({
             success: true,
-            message: "Ad created successfully",
-            data: savedAd
+            message: "Ads created successfully",
+            data: saved
         });
 
     } catch (error) {
         res.status(500).json({
             success: false,
-            message: "Error creating ad",
-            error: error.message
+            message: error.message
         });
     }
 };

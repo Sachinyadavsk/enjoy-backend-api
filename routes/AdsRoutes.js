@@ -4,13 +4,16 @@ import {
     getAllAds,
     getAdById,
     updateAd,
-    deleteAd
+    deleteAd,
+    upload
 } from "../controllers/AdsController.js";
 
 const router = express.Router();
 
 // CRUD Routes
-router.post("/ads", createAd);
+router.post("/ads", upload.fields([
+    { name: "banner_image", maxCount: 1 }
+]), createAd);
 router.get("/ads", getAllAds);
 router.get("/ads/:id", getAdById);
 router.put("/ads/:id", updateAd);

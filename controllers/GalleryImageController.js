@@ -1,31 +1,68 @@
 import GalleryImage from "../models/GalleryImage.js";
+import multer from "multer";
+import path from "path";
 
-// ✅ Upload / Create Image
+// ✅ Storage Config
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        if (file.fieldname === "image_path") {
+            cb(null, "uploads/image_path/");
+        }
+    },
+    filename: (req, file, cb) => {
+        const ext = path.extname(file.originalname);
+        const name = Date.now() + "-" + file.fieldname + ext;
+        cb(null, name);
+    }
+});
+
+// ✅ File Filter
+const fileFilter = (req, file, cb) => {
+    if (file.fieldname === "image_path" && !file.mimetype.startsWith("image/")) {
+        return cb(new Error("Only image allowed"), false);
+    }
+    cb(null, true);
+};
+
+// ✅ Multer Upload
+export const upload = multer({
+    storage,
+    limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
+    fileFilter
+});
+
+// Upload / Create Image
+
+
 export const createImage = async (req, res) => {
     try {
-        const image = new GalleryImage({
-            uid: req.body.uid,
-            post_id: req.body.post_id,
-            image_path: req.body.image_path,
-            caption: req.body.caption
-        });
+        let body = { ...req.body };
 
+        if (req.files) {
+            const baseUrl = req.protocol + "://" + req.get("host");
+
+            if (req.files.image_path) {
+                body.image_path =
+                    baseUrl + "/" + req.files.image_path[0].path.replace(/\\/g, "/");
+            }
+        }
+
+        const image = new GalleryImage(body);
         const saved = await image.save();
-
         res.status(201).json({
             success: true,
-            message: "Image added",
+            message: "Image created successfully",
             data: saved
         });
 
     } catch (error) {
         res.status(500).json({
             success: false,
-            message: "Error adding image",
-            error: error.message
+            message: error.message
         });
     }
 };
+
 
 // ✅ Get All Images
 export const getImages = async (req, res) => {

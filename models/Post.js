@@ -24,8 +24,15 @@ const PostSchema = new mongoose.Schema({
     video_path: { type: String },
     embed_code: { type: String },
 
-    category_id: { type: Number, required: true },
-    subcategories_id: { type: Number },
+    category_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Category",
+        required: true
+    },
+    subcategories_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Subcategory"
+    },
 
     is_slider: { type: Boolean, default: false },
     schedule_post: { type: Boolean, default: false },

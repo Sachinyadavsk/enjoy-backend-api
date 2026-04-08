@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const PageSchema = new mongoose.Schema({
     language_id: { type: String, maxlength: 5 },
-    uid: { type: Number, required: true },
+    uid: { type: Number},
     title: { type: String, trim: true },
     slug: { type: String, unique: true, lowercase: true, trim: true },
     content: { type: String },
