@@ -22,7 +22,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 // serve uploaded images
-app.use("/sliders", express.static("uploads/sliders"));
 app.use("/uploads", express.static("uploads"));
 
 

@@ -11,7 +11,9 @@ import {
 
 const router = express.Router();
 
-router.post("/sliders", upload.single("photo"), createSlider);
+router.post("/sliders", upload.fields([
+    { name: "photo" }
+]), createSlider);
 router.get("/sliders", getSliders);
 router.get("/sliders/:id", getSliderById);
 router.get("/sliders/category/:cate_id", getSlidersByCategory);
