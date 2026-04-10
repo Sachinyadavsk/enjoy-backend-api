@@ -7,7 +7,7 @@ import {
     updateSlider,
     deleteSlider
 } from "../controllers/GallerySliderController.js";
-import { upload } from "../controllers/sliderController.js";
+import { upload } from "../controllers/GallerySliderController.js";
 
 const router = express.Router();
 
