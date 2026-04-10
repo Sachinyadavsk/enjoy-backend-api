@@ -13,7 +13,7 @@ import postRoutes from "./routes/PostRoutes.js";
 import roleRoutes from "./routes/RoleRoutes.js";
 import subCategoryRoutes from "./routes/SubCategoryRoutes.js";
 import homeRoutes from "./routes/homeValueRoutes.js";
-
+import path from "path";
 
 dotenv.config();
 
@@ -22,7 +22,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 // serve uploaded images
-app.use("/uploads", express.static("uploads"));
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 
 const PORT = process.env.PORT || 3000;

@@ -1,66 +1,72 @@
 import Post from "../models/Post.js";
 import multer from "multer";
-import path from "path";
+import { CloudinaryStorage } from "multer-storage-cloudinary";
+import cloudinary from "../config/cloudinary.js";
 
-// ✅ Storage Config
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        if (file.fieldname === "video_path") {
-            cb(null, "uploads/video/");
-        } else if (file.fieldname === "image_big") {
-            cb(null, "uploads/postimage/");
+// ✅ Single Storage for both image + video
+const storage = new CloudinaryStorage({
+    cloudinary,
+    params: async (req, file) => {
+
+        // 👉 IMAGE
+        if (file.fieldname === "image_big") {
+            return {
+                folder: "posts/images",
+                allowed_formats: ["jpg", "png", "jpeg", "webp"],
+                resource_type: "image"
+            };
         }
-    },
-    filename: (req, file, cb) => {
-        const ext = path.extname(file.originalname);
-        const name = Date.now() + "-" + file.fieldname + ext;
-        cb(null, name);
+
+        // 👉 VIDEO
+        if (file.fieldname === "video_path") {
+            return {
+                folder: "posts/videos",
+                resource_type: "video",
+                allowed_formats: ["mp4", "mov", "avi"]
+            };
+        }
     }
 });
-
-// ✅ File Filter
-const fileFilter = (req, file, cb) => {
-    if (file.fieldname === "video_path" && !file.mimetype.startsWith("video/")) {
-        return cb(new Error("Only video allowed"), false);
-    }
-    if (file.fieldname === "image_big" && !file.mimetype.startsWith("image/")) {
-        return cb(new Error("Only image allowed"), false);
-    }
-    cb(null, true);
-};
 
 // ✅ Multer Upload
 export const upload = multer({
     storage,
-    limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
-    fileFilter
+    limits: { fileSize: 100 * 1024 * 1024 } // 100MB
 });
 
-// ✅ Create Post API
+const getPublicId = (url) => {
+    try {
+        const parts = url.split("/");
+        const fileName = parts.pop(); // abc123.jpg
+        const folder = parts.slice(parts.indexOf("upload") + 1).join("/");
+
+        const publicId = folder + "/" + fileName.split(".")[0];
+        return publicId;
+    } catch (err) {
+        return null;
+    }
+};
+
+// ✅ Create Post
 export const createPost = async (req, res) => {
     try {
         let body = { ...req.body };
 
         if (req.files) {
-            const baseUrl = req.protocol + "://" + req.get("host");
-
             if (req.files.image_big) {
-                body.image_big =
-                    baseUrl + "/" + req.files.image_big[0].path.replace(/\\/g, "/");
+                body.image_big = req.files.image_big[0].path; // Cloudinary URL
             }
 
             if (req.files.video_path) {
-                body.video_path =
-                    baseUrl + "/" + req.files.video_path[0].path.replace(/\\/g, "/");
+                body.video_path = req.files.video_path[0].path; // Cloudinary URL
             }
         }
 
         const post = new Post(body);
         const saved = await post.save();
 
-        res.status(201).json({
+        res.json({
             success: true,
-            message: "Post created successfully",
             data: saved
         });
 
@@ -72,7 +78,7 @@ export const createPost = async (req, res) => {
     }
 };
 
-// ✅ Get All Posts (with pagination)
+// ✅ Get All Posts
 export const getPosts = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
@@ -121,13 +127,12 @@ export const getPostById = async (req, res) => {
     } catch (error) {
         res.status(500).json({
             success: false,
-            message: "Error fetching post",
-            error: error.message
+            message: error.message
         });
     }
 };
 
-// ✅ Get Post by Slug (Frontend)
+// ✅ Get Post by Slug
 export const getPostBySlug = async (req, res) => {
     try {
         const data = await Post.findOne({ slug: req.params.slug });
@@ -147,8 +152,7 @@ export const getPostBySlug = async (req, res) => {
     } catch (error) {
         res.status(500).json({
             success: false,
-            message: "Error fetching post",
-            error: error.message
+            message: error.message
         });
     }
 };
@@ -156,9 +160,21 @@ export const getPostBySlug = async (req, res) => {
 // ✅ Update Post
 export const updatePost = async (req, res) => {
     try {
+        let body = { ...req.body };
+
+        if (req.files) {
+            if (req.files.image_big) {
+                body.image_big = req.files.image_big[0].path;
+            }
+
+            if (req.files.video_path) {
+                body.video_path = req.files.video_path[0].path;
+            }
+        }
+
         const updated = await Post.findByIdAndUpdate(
             req.params.id,
-            req.body,
+            body,
             { new: true }
         );
 
@@ -178,8 +194,7 @@ export const updatePost = async (req, res) => {
     } catch (error) {
         res.status(500).json({
             success: false,
-            message: "Error updating post",
-            error: error.message
+            message: error.message
         });
     }
 };
@@ -187,25 +202,45 @@ export const updatePost = async (req, res) => {
 // ✅ Delete Post
 export const deletePost = async (req, res) => {
     try {
-        const deleted = await Post.findByIdAndDelete(req.params.id);
+        const post = await Post.findById(req.params.id);
 
-        if (!deleted) {
+        if (!post) {
             return res.status(404).json({
                 success: false,
                 message: "Post not found"
             });
         }
 
+        // ✅ Delete Image
+        if (post.image_big) {
+            const publicId = getPublicId(post.image_big);
+            if (publicId) {
+                await cloudinary.uploader.destroy(publicId);
+            }
+        }
+
+        // ✅ Delete Video
+        if (post.video_path) {
+            const publicId = getPublicId(post.video_path);
+            if (publicId) {
+                await cloudinary.uploader.destroy(publicId, {
+                    resource_type: "video"
+                });
+            }
+        }
+
+        // ✅ Delete DB record
+        await Post.findByIdAndDelete(req.params.id);
+
         res.json({
             success: true,
-            message: "Post deleted"
+            message: "Post + media deleted successfully"
         });
 
     } catch (error) {
         res.status(500).json({
             success: false,
-            message: "Error deleting post",
-            error: error.message
+            message: error.message
         });
     }
 };

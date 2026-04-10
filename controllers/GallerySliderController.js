@@ -1,66 +1,69 @@
 import GallerySlider from "../models/GallerySlider.js";
-import fs from "fs";
 import multer from "multer";
-import path from "path";
+import { CloudinaryStorage } from "multer-storage-cloudinary";
+import cloudinary from "../config/cloudinary.js";
 
-const uploadDir = "uploads/sliders";
+// ✅ Single Storage for both image + video
+const storage = new CloudinaryStorage({
+    cloudinary,
+    params: async (req, file) => {
 
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, "uploads/sliders/");
-    },
-    filename: (req, file, cb) => {
-        const ext = path.extname(file.originalname);
-        const name = Date.now() + "-" + Math.round(Math.random() * 1e9) + ext;
-        cb(null, name);
+        // 👉 IMAGE
+        if (file.fieldname === "photo") {
+            return {
+                folder: "posts/images",
+                allowed_formats: ["jpg", "png", "jpeg", "webp"],
+                resource_type: "image"
+            };
+        }
     }
 });
 
-const fileFilter = (req, file, cb) => {
-    if (!file.mimetype.startsWith("image/")) {
-        return cb(new Error("Only image files allowed"), false);
-    }
-    cb(null, true);
-};
-
+// ✅ Multer Upload
 export const upload = multer({
     storage,
-    limits: { fileSize: 50 * 1024 * 1024 },
-    fileFilter
+    limits: { fileSize: 100 * 1024 * 1024 } // 100MB
 });
 
+const getPublicId = (url) => {
+    try {
+        const parts = url.split("/");
+        const fileName = parts.pop(); // abc123.jpg
+        const folder = parts.slice(parts.indexOf("upload") + 1).join("/");
 
-// ✅ CREATE
+        const publicId = folder + "/" + fileName.split(".")[0];
+        return publicId;
+    } catch (err) {
+        return null;
+    }
+};
+
 export const createSlider = async (req, res) => {
     try {
         let body = { ...req.body };
 
-        if (req.files?.photo) {
-            const baseUrl = req.protocol + "://" + req.get("host");
-
-            body.photo =
-                baseUrl +
-                "/uploads/sliders/" +
-                req.files.photo[0].filename;
+        if (req.files) {
+            if (req.files.photo) {
+                body.photo = req.files.photo[0].path;
+            }
         }
 
         const slider = new GallerySlider(body);
         const saved = await slider.save();
-
-        res.status(201).json({
+        res.json({
             success: true,
-            message: "Slider created successfully",
             data: saved
         });
-
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
     }
 };
+
+
+
 
 // ✅ GET ALL
 export const getSliders = async (req, res) => {
@@ -187,29 +190,25 @@ export const deleteSlider = async (req, res) => {
             });
         }
 
+        // ✅ Delete Image
         if (slider.photo) {
-            const filePath = path.join(
-                process.cwd(),
-                slider.photo.replace(/^.*\/uploads/, "uploads")
-            );
-
-            if (fs.existsSync(filePath)) {
-                fs.unlinkSync(filePath);
+            const publicId = getPublicId(slider.photo);
+            if (publicId) {
+                await cloudinary.uploader.destroy(publicId);
             }
         }
 
-        await slider.deleteOne();
-
+        // ✅ Delete DB record
+        await GallerySlider.findByIdAndDelete(req.params.id);
         res.json({
             success: true,
-            message: "Slider deleted successfully"
+            message: "Slider + media deleted successfully"
         });
 
     } catch (error) {
         res.status(500).json({
             success: false,
-            message: "Error deleting slider",
-            error: error.message
+            message: error.message
         });
     }
 };

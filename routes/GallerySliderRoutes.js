@@ -11,7 +11,22 @@ import { upload } from "../controllers/GallerySliderController.js";
 
 const router = express.Router();
 
-router.post("/sliders", upload.fields([{ name: "photo", maxCount: 1 }]), createSlider);
+router.post("/sliders", (req, res, next) => {
+    upload.fields([
+        { name: "photo", maxCount: 1 }
+    ])(req, res, function (err) {
+
+        if (err) {
+            return res.status(400).json({
+                success: false,
+                message: err.message
+            });
+        }
+
+        next();
+    });
+
+}, createSlider);
 router.get("/sliders", getSliders);
 router.get("/sliders/:id", getSliderById);
 router.get("/sliders/category/:cate_id", getSlidersByCategory);
