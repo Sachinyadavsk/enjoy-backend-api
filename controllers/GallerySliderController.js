@@ -1,9 +1,14 @@
 import GallerySlider from "../models/GallerySlider.js";
+import fs from "fs";
 import multer from "multer";
 import path from "path";
-import fs from "fs";
 
-// Storage Config
+const uploadDir = "uploads/sliders";
+
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+}
+
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         cb(null, "uploads/sliders/");
@@ -15,32 +20,28 @@ const storage = multer.diskStorage({
     }
 });
 
-// File Filter
 const fileFilter = (req, file, cb) => {
     if (!file.mimetype.startsWith("image/")) {
-        return cb(new Error("Only image files are allowed"), false);
+        return cb(new Error("Only image files allowed"), false);
     }
     cb(null, true);
 };
 
-// Upload Middleware
 export const upload = multer({
     storage,
-    limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
+    limits: { fileSize: 50 * 1024 * 1024 },
     fileFilter
 });
 
-// Upload / Create Image
 
-
+// ✅ CREATE
 export const createSlider = async (req, res) => {
     try {
         let body = { ...req.body };
 
-        if (req.files && req.files.photo) {
+        if (req.files?.photo) {
             const baseUrl = req.protocol + "://" + req.get("host");
 
-            // ✅ Clean & stable URL
             body.photo =
                 baseUrl +
                 "/uploads/sliders/" +
@@ -57,23 +58,16 @@ export const createSlider = async (req, res) => {
         });
 
     } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: error.message
-        });
+        res.status(500).json({ success: false, message: error.message });
     }
 };
 
-
-// ✅ Get All Sliders
+// ✅ GET ALL
 export const getSliders = async (req, res) => {
     try {
         const data = await GallerySlider.find().sort({ createdAt: -1 });
 
-        res.json({
-            success: true,
-            data
-        });
+        res.json({ success: true, data });
 
     } catch (error) {
         res.status(500).json({
@@ -84,7 +78,7 @@ export const getSliders = async (req, res) => {
     }
 };
 
-// ✅ Get Slider by ID
+// ✅ GET BY ID
 export const getSliderById = async (req, res) => {
     try {
         const data = await GallerySlider.findById(req.params.id);
@@ -96,10 +90,7 @@ export const getSliderById = async (req, res) => {
             });
         }
 
-        res.json({
-            success: true,
-            data
-        });
+        res.json({ success: true, data });
 
     } catch (error) {
         res.status(500).json({
@@ -110,15 +101,14 @@ export const getSliderById = async (req, res) => {
     }
 };
 
-// ✅ Get Sliders by Category
+// ✅ GET BY CATEGORY
 export const getSlidersByCategory = async (req, res) => {
     try {
-        const data = await GallerySlider.find({ cate_id: req.params.cate_id });
-
-        res.json({
-            success: true,
-            data
+        const data = await GallerySlider.find({
+            cate_id: req.params.cate_id
         });
+
+        res.json({ success: true, data });
 
     } catch (error) {
         res.status(500).json({
@@ -129,25 +119,50 @@ export const getSlidersByCategory = async (req, res) => {
     }
 };
 
-// ✅ Update Slider
+// ✅ UPDATE (WITH OLD IMAGE DELETE)
 export const updateSlider = async (req, res) => {
     try {
-        const updated = await GallerySlider.findByIdAndUpdate(
-            req.params.id,
-            req.body,
-            { new: true }
-        );
+        const slider = await GallerySlider.findById(req.params.id);
 
-        if (!updated) {
+        if (!slider) {
             return res.status(404).json({
                 success: false,
                 message: "Slider not found"
             });
         }
 
+        let body = { ...req.body };
+
+        if (req.files?.photo) {
+            const baseUrl = req.protocol + "://" + req.get("host");
+
+            // ✅ delete old image
+            if (slider.photo) {
+                const oldPath = path.join(
+                    process.cwd(),
+                    slider.photo.replace(/^.*\/uploads/, "uploads")
+                );
+
+                if (fs.existsSync(oldPath)) {
+                    fs.unlinkSync(oldPath);
+                }
+            }
+
+            body.photo =
+                baseUrl +
+                "/uploads/sliders/" +
+                req.files.photo[0].filename;
+        }
+
+        const updated = await GallerySlider.findByIdAndUpdate(
+            req.params.id,
+            body,
+            { new: true }
+        );
+
         res.json({
             success: true,
-            message: "Slider updated",
+            message: "Slider updated successfully",
             data: updated
         });
 
@@ -160,7 +175,7 @@ export const updateSlider = async (req, res) => {
     }
 };
 
-// ✅ Delete Slider
+// ✅ DELETE (FINAL FIXED)
 export const deleteSlider = async (req, res) => {
     try {
         const slider = await GallerySlider.findById(req.params.id);
@@ -172,11 +187,10 @@ export const deleteSlider = async (req, res) => {
             });
         }
 
-        // ✅ Delete file if stored locally
-        if (slider.photo.includes("/sliders/")) {
-            const filePath = slider.photo.replace(
-                `${req.protocol}://${req.get("host")}/sliders/`,
-                "uploads/sliders/"
+        if (slider.photo) {
+            const filePath = path.join(
+                process.cwd(),
+                slider.photo.replace(/^.*\/uploads/, "uploads")
             );
 
             if (fs.existsSync(filePath)) {
@@ -188,7 +202,7 @@ export const deleteSlider = async (req, res) => {
 
         res.json({
             success: true,
-            message: "Slider deleted"
+            message: "Slider deleted successfully"
         });
 
     } catch (error) {
