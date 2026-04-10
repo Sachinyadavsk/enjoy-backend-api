@@ -1,6 +1,7 @@
 import GallerySlider from "../models/GallerySlider.js";
 import multer from "multer";
 import path from "path";
+import fs from "fs";
 
 // Storage Config
 const storage = multer.diskStorage({
