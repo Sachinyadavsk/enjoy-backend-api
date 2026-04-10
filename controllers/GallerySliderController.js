@@ -2,29 +2,27 @@ import GallerySlider from "../models/GallerySlider.js";
 import multer from "multer";
 import path from "path";
 
-// ✅ Storage Config
+// Storage Config
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        if (file.fieldname === "photo") {
-            cb(null, "uploads/sliders/");
-        }
+        cb(null, "uploads/sliders/");
     },
     filename: (req, file, cb) => {
         const ext = path.extname(file.originalname);
-        const name = Date.now() + "-" + file.fieldname + ext;
+        const name = Date.now() + "-" + Math.round(Math.random() * 1e9) + ext;
         cb(null, name);
     }
 });
 
-// ✅ File Filter
+// File Filter
 const fileFilter = (req, file, cb) => {
-    if (file.fieldname === "photo" && !file.mimetype.startsWith("image/")) {
-        return cb(new Error("Only image allowed"), false);
+    if (!file.mimetype.startsWith("image/")) {
+        return cb(new Error("Only image files are allowed"), false);
     }
     cb(null, true);
 };
 
-// ✅ Multer Upload
+// Upload Middleware
 export const upload = multer({
     storage,
     limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
@@ -38,17 +36,19 @@ export const createSlider = async (req, res) => {
     try {
         let body = { ...req.body };
 
-        if (req.files) {
+        if (req.files && req.files.photo) {
             const baseUrl = req.protocol + "://" + req.get("host");
 
-            if (req.files.photo) {
-                body.photo =
-                    baseUrl + "/" + req.files.photo[0].path.replace(/\\/g, "/");
-            }
+            // ✅ Clean & stable URL
+            body.photo =
+                baseUrl +
+                "/uploads/sliders/" +
+                req.files.photo[0].filename;
         }
 
         const slider = new GallerySlider(body);
         const saved = await slider.save();
+
         res.status(201).json({
             success: true,
             message: "Slider created successfully",
