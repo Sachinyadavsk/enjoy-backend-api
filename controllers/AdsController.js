@@ -66,11 +66,11 @@ export const createAd = async (req, res) => {
 // ✅ Get All Ads
 export const getAllAds = async (req, res) => {
     try {
-        const ads = await Ads.find().sort({ createdAt: -1 });
+        const data = await Ads.find().sort({ createdAt: -1 });
 
         res.json({
             success: true,
-            data: ads
+            data
         });
 
     } catch (error) {
