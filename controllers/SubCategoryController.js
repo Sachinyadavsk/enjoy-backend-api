@@ -140,9 +140,24 @@ export const getSubCategoryById = async (req, res) => {
 // ✅ Update
 export const updateSubCategory = async (req, res) => {
     try {
+        let body = { ...req.body };
+
+        if (req.files) {
+            const baseUrl = req.protocol + "://" + req.get("host");
+
+            if (req.files.photo) {
+                body.photo =
+                    baseUrl + "/" + req.files.photo[0].path.replace(/\\/g, "/");
+            }
+
+            if (req.files.banner) {
+                body.banner =
+                    baseUrl + "/" + req.files.banner[0].path.replace(/\\/g, "/");
+            }
+        }
         const updated = await SubCategory.findByIdAndUpdate(
             req.params.id,
-            req.body,
+            body,
             { new: true }
         );
 

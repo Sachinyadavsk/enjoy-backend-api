@@ -2,11 +2,13 @@ import GalleryImage from "../models/GalleryImage.js";
 import multer from "multer";
 import path from "path";
 
-// ✅ Storage Config
+// Storage Config
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         if (file.fieldname === "image_path") {
             cb(null, "uploads/image_path/");
+        } else {
+            cb(null, "uploads/");
         }
     },
     filename: (req, file, cb) => {
@@ -16,42 +18,44 @@ const storage = multer.diskStorage({
     }
 });
 
-// ✅ File Filter
+// File Filter
 const fileFilter = (req, file, cb) => {
-    if (file.fieldname === "image_path" && !file.mimetype.startsWith("image/")) {
-        return cb(new Error("Only image allowed"), false);
+    if (!file.mimetype.startsWith("image/")) {
+        return cb(new Error("Only images are allowed"), false);
     }
     cb(null, true);
 };
 
-// ✅ Multer Upload
+// Multer Instance (IMPORTANT)
 export const upload = multer({
     storage,
-    limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
+    limits: { fileSize: 50 * 1024 * 1024 },
     fileFilter
 });
 
-// Upload / Create Image
 
+
+// Upload / Create Image
 
 export const createImage = async (req, res) => {
     try {
         let body = { ...req.body };
 
-        if (req.files) {
-            const baseUrl = req.protocol + "://" + req.get("host");
+        const baseUrl = req.protocol + "://" + req.get("host");
 
-            if (req.files.image_path) {
-                body.image_path =
-                    baseUrl + "/" + req.files.image_path[0].path.replace(/\\/g, "/");
-            }
+        // Multiple images
+        if (req.files?.image_path) {
+            body.image_path = req.files.image_path.map(file => {
+                return baseUrl + "/" + file.path.replace(/\\/g, "/");
+            });
         }
 
         const image = new GalleryImage(body);
         const saved = await image.save();
+
         res.status(201).json({
             success: true,
-            message: "Image created successfully",
+            message: "Images uploaded successfully",
             data: saved
         });
 
@@ -86,7 +90,7 @@ export const getImages = async (req, res) => {
 // ✅ Get Images by Post ID
 export const getImagesByPost = async (req, res) => {
     try {
-        const data = await GalleryImage.find({ post_id: req.params.post_id });
+        const data = await GalleryImage.findById(req.params.id);
 
         res.json({
             success: true,
@@ -105,9 +109,19 @@ export const getImagesByPost = async (req, res) => {
 // ✅ Update Image
 export const updateImage = async (req, res) => {
     try {
+        let body = { ...req.body };
+
+        const baseUrl = req.protocol + "://" + req.get("host");
+
+        // Multiple images
+        if (req.files?.image_path) {
+            body.image_path = req.files.image_path.map(file => {
+                return baseUrl + "/" + file.path.replace(/\\/g, "/");
+            });
+        }
         const updated = await GalleryImage.findByIdAndUpdate(
             req.params.id,
-            req.body,
+            body,
             { new: true }
         );
 

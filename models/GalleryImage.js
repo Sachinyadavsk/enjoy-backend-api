@@ -7,7 +7,11 @@ const GalleryImageSchema = new mongoose.Schema({
         ref: "Post",
         required: true
     },
-    image_path: { type: String },
+    image_path: [
+            {
+                type: String
+            }
+        ],
     caption: { type: String, trim: true }
 }, {
     timestamps: true // handles createdAt & updatedAt

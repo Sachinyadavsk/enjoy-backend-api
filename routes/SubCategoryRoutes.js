@@ -19,7 +19,10 @@ router.post("/subcategories", upload.fields([
 router.get("/subcategories", getSubCategories);
 router.get("/subcategories/category/:category_id", getByCategory);
 router.get("/subcategories/:id", getSubCategoryById);
-router.put("/subcategories/:id", updateSubCategory);
+router.put("/subcategories/:id", upload.fields([
+    { name: "photo", maxCount: 1 },
+    { name: "banner", maxCount: 1 }
+]), updateSubCategory);
 router.delete("/subcategories/:id", deleteSubCategory);
 
 export default router;
