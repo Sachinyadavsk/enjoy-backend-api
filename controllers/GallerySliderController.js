@@ -136,25 +136,10 @@ export const updateSlider = async (req, res) => {
 
         let body = { ...req.body };
 
-        if (req.files?.photo) {
-            const baseUrl = req.protocol + "://" + req.get("host");
-
-            // ✅ delete old image
-            if (slider.photo) {
-                const oldPath = path.join(
-                    process.cwd(),
-                    slider.photo.replace(/^.*\/uploads/, "uploads")
-                );
-
-                if (fs.existsSync(oldPath)) {
-                    fs.unlinkSync(oldPath);
-                }
+        if (req.files) {
+            if (req.files.photo) {
+                body.photo = req.files.photo[0].path;
             }
-
-            body.photo =
-                baseUrl +
-                "/uploads/sliders/" +
-                req.files.photo[0].filename;
         }
 
         const updated = await GallerySlider.findByIdAndUpdate(

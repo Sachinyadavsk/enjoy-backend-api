@@ -111,9 +111,19 @@ export const getAdById = async (req, res) => {
 // ✅ Update Ad
 export const updateAd = async (req, res) => {
     try {
+        let body = { ...req.body };
+
+        if (req.files) {
+            const baseUrl = req.protocol + "://" + req.get("host");
+
+            if (req.files.banner_image) {
+                body.banner_image =
+                    baseUrl + "/" + req.files.banner_image[0].path.replace(/\\/g, "/");
+            }
+        }
         const updatedAd = await Ads.findByIdAndUpdate(
             req.params.id,
-            req.body,
+            body,
             { new: true }
         );
 

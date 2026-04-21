@@ -16,7 +16,9 @@ router.post("/ads", upload.fields([
 ]), createAd);
 router.get("/ads", getAllAds);
 router.get("/ads/:id", getAdById);
-router.put("/ads/:id", updateAd);
+router.put("/ads/:id", upload.fields([
+    { name: "banner_image", maxCount: 1 }
+]), updateAd);
 router.delete("/ads/:id", deleteAd);
 
 export default router;

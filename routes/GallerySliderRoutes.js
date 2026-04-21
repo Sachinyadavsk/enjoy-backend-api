@@ -30,7 +30,9 @@ router.post("/sliders", (req, res, next) => {
 router.get("/sliders", getSliders);
 router.get("/sliders/:id", getSliderById);
 router.get("/sliders/category/:cate_id", getSlidersByCategory);
-router.put("/sliders/:id", upload.fields([{ name: "photo", maxCount: 1 }]), updateSlider);
+router.put("/sliders/:id", upload.fields([
+    { name: "photo", maxCount: 1 }
+]), updateSlider);
 router.delete("/sliders/:id", deleteSlider);
 
 export default router;
