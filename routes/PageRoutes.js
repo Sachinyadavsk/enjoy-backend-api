@@ -3,18 +3,17 @@ import {
     createPage,
     getPages,
     getPageById,
-    getPageBySlug,
     updatePage,
-    deletePage
+    deletePage,
+    upload,
 } from "../controllers/PageController.js";
 
 const router = express.Router();
 
-router.post("/pages", createPage);
+router.post("/pages", upload.none(), createPage);
 router.get("/pages", getPages);
 router.get("/pages/:id", getPageById);
-router.get("/page/slug/:slug", getPageBySlug); // frontend friendly
-router.put("/pages/:id", updatePage);
+router.put("/pages/:id", upload.none(), updatePage);
 router.delete("/pages/:id", deletePage);
 
 export default router;
