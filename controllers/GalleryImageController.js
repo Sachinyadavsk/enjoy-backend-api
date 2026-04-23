@@ -172,3 +172,24 @@ export const deleteImage = async (req, res) => {
         });
     }
 };
+
+// post ID according gallery image get
+export const getImagesPostBYId = async (req, res) => { 
+    try {
+        const { post_id } = req.params;
+
+        const data = await GalleryImage.find({ post_id: post_id });
+
+        res.json({
+            success: true,
+            data
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: "Error fetching post images",
+            error: error.message
+        });
+    }
+};

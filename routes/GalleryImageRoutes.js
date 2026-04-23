@@ -5,7 +5,8 @@ import {
     getImagesByPost,
     updateImage,
     deleteImage,
-    upload
+    upload,
+    getImagesPostBYId
 } from "../controllers/GalleryImageController.js";
 
 const router = express.Router();
@@ -17,6 +18,7 @@ router.post("/gallery", upload.fields([
 ]), createImage);
 router.get("/gallery", getImages);
 router.get("/gallery/post/:id", getImagesByPost);
+router.get("/gallery/images/:post_id", getImagesPostBYId);
 router.put("/gallery/:id", upload.fields([
     { name: "image_path", maxCount: 10 },
     { name: "thumbnail", maxCount: 1 }
