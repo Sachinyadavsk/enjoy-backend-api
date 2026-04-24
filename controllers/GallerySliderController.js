@@ -3,7 +3,7 @@ import multer from "multer";
 import { CloudinaryStorage } from "multer-storage-cloudinary";
 import cloudinary from "../config/cloudinary.js";
 
-// ✅ Single Storage for both image + video
+//  Single Storage for both image + video
 const storage = new CloudinaryStorage({
     cloudinary,
     params: async (req, file) => {
@@ -19,7 +19,7 @@ const storage = new CloudinaryStorage({
     }
 });
 
-// ✅ Multer Upload
+//  Multer Upload
 export const upload = multer({
     storage,
     limits: { fileSize: 100 * 1024 * 1024 } // 100MB
@@ -65,7 +65,7 @@ export const createSlider = async (req, res) => {
 
 
 
-// ✅ GET ALL
+//  GET ALL
 export const getSliders = async (req, res) => {
     try {
         const data = await GallerySlider.find().sort({ createdAt: -1 });
@@ -81,7 +81,7 @@ export const getSliders = async (req, res) => {
     }
 };
 
-// ✅ GET BY ID
+//  GET BY ID
 export const getSliderById = async (req, res) => {
     try {
         const data = await GallerySlider.findById(req.params.id);
@@ -104,7 +104,7 @@ export const getSliderById = async (req, res) => {
     }
 };
 
-// ✅ GET BY CATEGORY
+//  GET BY CATEGORY
 export const getSlidersByCategory = async (req, res) => {
     try {
         const data = await GallerySlider.find({
@@ -122,7 +122,7 @@ export const getSlidersByCategory = async (req, res) => {
     }
 };
 
-// ✅ UPDATE (WITH OLD IMAGE DELETE)
+//  UPDATE (WITH OLD IMAGE DELETE)
 export const updateSlider = async (req, res) => {
     try {
         const slider = await GallerySlider.findById(req.params.id);
@@ -163,7 +163,7 @@ export const updateSlider = async (req, res) => {
     }
 };
 
-// ✅ DELETE (FINAL FIXED)
+//  DELETE (FINAL FIXED)
 export const deleteSlider = async (req, res) => {
     try {
         const slider = await GallerySlider.findById(req.params.id);
@@ -175,7 +175,7 @@ export const deleteSlider = async (req, res) => {
             });
         }
 
-        // ✅ Delete Image
+        //  Delete Image
         if (slider.photo) {
             const publicId = getPublicId(slider.photo);
             if (publicId) {
@@ -183,7 +183,7 @@ export const deleteSlider = async (req, res) => {
             }
         }
 
-        // ✅ Delete DB record
+        //  Delete DB record
         await GallerySlider.findByIdAndDelete(req.params.id);
         res.json({
             success: true,

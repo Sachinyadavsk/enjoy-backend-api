@@ -3,7 +3,7 @@ import { getHomeData } from "../controllers/homeController.js";
 
 const router = express.Router();
 
-// ✅ MUST be "/"
+//  MUST be "/"
 router.get("/home", getHomeData);
 
 export default router;

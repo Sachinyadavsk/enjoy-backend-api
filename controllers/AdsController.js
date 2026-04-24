@@ -2,7 +2,7 @@ import Ads from "../models/AdsModel.js";
 import multer from "multer";
 import path from "path";
 
-// ✅ Storage Config
+//  Storage Config
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         if (file.fieldname === "banner_image") {
@@ -16,7 +16,7 @@ const storage = multer.diskStorage({
     }
 });
 
-// ✅ File Filter
+//  File Filter
 const fileFilter = (req, file, cb) => {
     if (file.fieldname === "banner_image" && !file.mimetype.startsWith("image/")) {
         return cb(new Error("Only image allowed"), false);
@@ -24,14 +24,14 @@ const fileFilter = (req, file, cb) => {
     cb(null, true);
 };
 
-// ✅ Multer Upload
+//  Multer Upload
 export const upload = multer({
     storage,
     limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
     fileFilter
 });
 
-// ✅ Create Ad
+//  Create Ad
 
 
 export const createAd = async (req, res) => {
@@ -63,7 +63,7 @@ export const createAd = async (req, res) => {
     }
 };
 
-// ✅ Get All Ads
+//  Get All Ads
 export const getAllAds = async (req, res) => {
     try {
         const data = await Ads.find().sort({ createdAt: -1 });
@@ -82,7 +82,7 @@ export const getAllAds = async (req, res) => {
     }
 };
 
-// ✅ Get Single Ad
+//  Get Single Ad
 export const getAdById = async (req, res) => {
     try {
         const ad = await Ads.findById(req.params.id);
@@ -108,7 +108,7 @@ export const getAdById = async (req, res) => {
     }
 };
 
-// ✅ Update Ad
+//  Update Ad
 export const updateAd = async (req, res) => {
     try {
         let body = { ...req.body };
@@ -149,7 +149,7 @@ export const updateAd = async (req, res) => {
     }
 };
 
-// ✅ Delete Ad
+//  Delete Ad
 export const deleteAd = async (req, res) => {
     try {
         const deletedAd = await Ads.findByIdAndDelete(req.params.id);

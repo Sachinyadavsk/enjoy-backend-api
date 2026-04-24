@@ -68,7 +68,7 @@ export const createImage = async (req, res) => {
 };
 
 
-// ✅ Get All Images
+//  Get All Images
 export const getImages = async (req, res) => {
     try {
         const data = await GalleryImage.find().sort({ createdAt: -1 });
@@ -87,7 +87,7 @@ export const getImages = async (req, res) => {
     }
 };
 
-// ✅ Get Images by Post ID
+//  Get Images by Post ID
 export const getImagesByPost = async (req, res) => {
     try {
         const data = await GalleryImage.findById(req.params.id);
@@ -106,7 +106,7 @@ export const getImagesByPost = async (req, res) => {
     }
 };
 
-// ✅ Update Image
+//  Update Image
 export const updateImage = async (req, res) => {
     try {
         let body = { ...req.body };
@@ -147,7 +147,7 @@ export const updateImage = async (req, res) => {
     }
 };
 
-// ✅ Delete Image
+//  Delete Image
 export const deleteImage = async (req, res) => {
     try {
         const deleted = await GalleryImage.findByIdAndDelete(req.params.id);

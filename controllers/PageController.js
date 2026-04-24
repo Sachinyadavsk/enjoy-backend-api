@@ -7,11 +7,11 @@ export const upload = multer({ storage });
 const generateSlug = (text) =>
     text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
-// ✅ Create Page
+//  Create Page
 export const createPage = async (req, res) => {
     try {
         let { language_id, uid, title, slug, content, placement, status, wbsite_right_column } = req.body;
-        // ✅ Validation
+        //  Validation
         if (!language_id || !uid || !title || !content) {
             return res.status(400).json({
                 success: false,
@@ -19,7 +19,7 @@ export const createPage = async (req, res) => {
             });
         }
 
-        // ✅ Auto slug
+        //  Auto slug
         slug = slug ? generateSlug(slug) : generateSlug(title);
 
         const page = new Page({
@@ -59,7 +59,7 @@ export const createPage = async (req, res) => {
     }
 };
 
-// ✅ Get All Pages
+//  Get All Pages
 export const getPages = async (req, res) => {
     try {
         const pages = await Page.find().sort({ createdAt: -1 });
@@ -79,7 +79,7 @@ export const getPages = async (req, res) => {
     }
 };
 
-// ✅ Get Single Page
+//  Get Single Page
 export const getPageById = async (req, res) => {
     try {
         const page = await Page.findById(req.params.id);
@@ -105,7 +105,7 @@ export const getPageById = async (req, res) => {
     }
 };
 
-// ✅ Update Page
+//  Update Page
 export const updatePage = async (req, res) => {
     try {
         let { title, slug } = req.body;
@@ -145,7 +145,7 @@ export const updatePage = async (req, res) => {
     }
 };
 
-// ✅ Delete Page
+//  Delete Page
 export const deletePage = async (req, res) => {
     try {
         const deleted = await Page.findByIdAndDelete(req.params.id);

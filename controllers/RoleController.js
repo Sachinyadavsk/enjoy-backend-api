@@ -1,6 +1,6 @@
 import Role from "../models/Role.js";
 
-// ✅ Create Role
+//  Create Role
 export const createRole = async (req, res) => {
     try {
         const role = new Role(req.body);
@@ -21,7 +21,7 @@ export const createRole = async (req, res) => {
     }
 };
 
-// ✅ Get All Roles
+//  Get All Roles
 export const getRoles = async (req, res) => {
     try {
         const data = await Role.find().sort({ createdAt: -1 });
@@ -40,7 +40,7 @@ export const getRoles = async (req, res) => {
     }
 };
 
-// ✅ Get Role by ID
+//  Get Role by ID
 export const getRoleById = async (req, res) => {
     try {
         const data = await Role.findById(req.params.id);
@@ -66,7 +66,7 @@ export const getRoleById = async (req, res) => {
     }
 };
 
-// ✅ Update Role
+//  Update Role
 export const updateRole = async (req, res) => {
     try {
         const updated = await Role.findByIdAndUpdate(
@@ -97,7 +97,7 @@ export const updateRole = async (req, res) => {
     }
 };
 
-// ✅ Delete Role
+//  Delete Role
 export const deleteRole = async (req, res) => {
     try {
         const deleted = await Role.findByIdAndDelete(req.params.id);

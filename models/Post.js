@@ -49,13 +49,13 @@ const PostSchema = new mongoose.Schema({
 
 }, { timestamps: true });
 
-// ✅ Unique compound index (like SQL)
+//  Unique compound index (like SQL)
 PostSchema.index(
     { slug: 1, category_id: 1, subcategories_id: 1 },
     { unique: true }
 );
 
-// ✅ Auto slug generate
+//  Auto slug generate
 PostSchema.pre("save", function () {
     if (this.title && !this.slug) {
         this.slug = this.title

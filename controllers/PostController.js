@@ -3,7 +3,7 @@ import multer from "multer";
 import { CloudinaryStorage } from "multer-storage-cloudinary";
 import cloudinary from "../config/cloudinary.js";
 
-// ✅ Single Storage for both image + video
+//  Single Storage for both image + video
 const storage = new CloudinaryStorage({
     cloudinary,
     params: async (req, file) => {
@@ -28,7 +28,7 @@ const storage = new CloudinaryStorage({
     }
 });
 
-// ✅ Multer Upload
+//  Multer Upload
 export const upload = multer({
     storage,
     limits: { fileSize: 100 * 1024 * 1024 } // 100MB
@@ -47,7 +47,7 @@ const getPublicId = (url) => {
     }
 };
 
-// ✅ Create Post
+//  Create Post
 export const createPost = async (req, res) => {
     try {
         let body = { ...req.body };
@@ -78,7 +78,7 @@ export const createPost = async (req, res) => {
     }
 };
 
-// ✅ Get All Posts
+//  Get All Posts
 export const getPosts = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
@@ -107,7 +107,7 @@ export const getPosts = async (req, res) => {
     }
 };
 
-// ✅ Get Single Post
+//  Get Single Post
 export const getPostById = async (req, res) => {
     try {
         const data = await Post.findById(req.params.id);
@@ -132,7 +132,7 @@ export const getPostById = async (req, res) => {
     }
 };
 
-// ✅ Get Post by Slug
+//  Get Post by Slug
 export const getPostBySlug = async (req, res) => {
     try {
         const data = await Post.findOne({ slug: req.params.slug });
@@ -157,7 +157,7 @@ export const getPostBySlug = async (req, res) => {
     }
 };
 
-// ✅ Update Post
+//  Update Post
 export const updatePost = async (req, res) => {
     try {
         let body = { ...req.body };
@@ -199,7 +199,7 @@ export const updatePost = async (req, res) => {
     }
 };
 
-// ✅ Delete Post
+//  Delete Post
 export const deletePost = async (req, res) => {
     try {
         const post = await Post.findById(req.params.id);
@@ -211,7 +211,7 @@ export const deletePost = async (req, res) => {
             });
         }
 
-        // ✅ Delete Image
+        //  Delete Image
         if (post.image_big) {
             const publicId = getPublicId(post.image_big);
             if (publicId) {
@@ -219,7 +219,7 @@ export const deletePost = async (req, res) => {
             }
         }
 
-        // ✅ Delete Video
+        //  Delete Video
         if (post.video_path) {
             const publicId = getPublicId(post.video_path);
             if (publicId) {
@@ -229,7 +229,7 @@ export const deletePost = async (req, res) => {
             }
         }
 
-        // ✅ Delete DB record
+        //  Delete DB record
         await Post.findByIdAndDelete(req.params.id);
 
         res.json({

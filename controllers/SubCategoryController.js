@@ -3,7 +3,7 @@ import SubCategory from "../models/SubCategory.js";
 import multer from "multer";
 import path from "path";
 
-// ✅ Storage Config
+//  Storage Config
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         if (file.fieldname === "photo") {
@@ -19,7 +19,7 @@ const storage = multer.diskStorage({
     }
 });
 
-// ✅ File Filter
+//  File Filter
 const fileFilter = (req, file, cb) => {
     if (file.fieldname === "photo" && !file.mimetype.startsWith("image/")) {
         return cb(new Error("Only image allowed"), false);
@@ -30,14 +30,14 @@ const fileFilter = (req, file, cb) => {
     cb(null, true);
 };
 
-// ✅ Multer Upload
+//  Multer Upload
 export const upload = multer({
     storage,
     limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
     fileFilter
 });
 
-// ✅ Create SubCategory API
+//  Create SubCategory API
 export const createSubCategory = async (req, res) => {
     try {
         let body = { ...req.body };
@@ -73,26 +73,54 @@ export const createSubCategory = async (req, res) => {
     }
 };
 
-// ✅ Get All SubCategories
+//  Get All SubCategories
 export const getSubCategories = async (req, res) => {
     try {
-        const data = await SubCategory.find().sort({ createdAt: -1 });
+        let { page = 1, limit = 5, search = "" } = req.query;
 
-        res.json({
+        page = parseInt(page);
+        limit = parseInt(limit);
+
+        const query = {};
+
+        // 🔍 Search (by name or slug)
+        if (search) {
+            query.$or = [
+                { name: { $regex: search, $options: "i" } },
+                { slug: { $regex: search, $options: "i" } }
+            ];
+        }
+
+        // Total count
+        const total = await SubCategory.countDocuments(query);
+
+        // Fetch paginated data
+        const subCategories = await SubCategory.find(query)
+            .skip((page - 1) * limit)
+            .limit(limit)
+            .sort({ createdAt: -1 });
+
+        return res.status(200).json({
             success: true,
-            data
+            data: subCategories,
+            pagination: {
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit)
+            }
         });
 
     } catch (error) {
-        res.status(500).json({
+        console.log("ERROR:", error);
+        return res.status(500).json({
             success: false,
-            message: "Error fetching subcategories",
-            error: error.message
+            message: error.message
         });
     }
 };
 
-// ✅ Get by Category ID
+//  Get by Category ID
 export const getByCategory = async (req, res) => {
     try {
         const data = await SubCategory.find({ category_id: req.params.category_id });
@@ -111,7 +139,7 @@ export const getByCategory = async (req, res) => {
     }
 };
 
-// ✅ Get Single SubCategory
+//  Get Single SubCategory
 export const getSubCategoryById = async (req, res) => {
     try {
         const data = await SubCategory.findById(req.params.id);
@@ -137,7 +165,7 @@ export const getSubCategoryById = async (req, res) => {
     }
 };
 
-// ✅ Update
+//  Update
 export const updateSubCategory = async (req, res) => {
     try {
         let body = { ...req.body };
@@ -183,7 +211,7 @@ export const updateSubCategory = async (req, res) => {
     }
 };
 
-// ✅ Delete
+//  Delete
 export const deleteSubCategory = async (req, res) => {
     try {
         const deleted = await SubCategory.findByIdAndDelete(req.params.id);
