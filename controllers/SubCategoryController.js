@@ -1,40 +1,38 @@
 import SubCategory from "../models/SubCategory.js";
 
 import multer from "multer";
-import path from "path";
+import { CloudinaryStorage } from "multer-storage-cloudinary";
+import cloudinary from "../config/cloudinary.js";
 
-//  Storage Config
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
+//  Single Storage for both image + video
+const storage = new CloudinaryStorage({
+    cloudinary,
+    params: async (req, file) => {
+
+        // 👉 IMAGE
         if (file.fieldname === "photo") {
-            cb(null, "uploads/photo/");
-        } else if (file.fieldname === "banner") {
-            cb(null, "uploads/banner/");
+            return {
+                folder: "posts/images",
+                allowed_formats: ["jpg", "png", "jpeg", "webp"],
+                resource_type: "image"
+            };
         }
-    },
-    filename: (req, file, cb) => {
-        const ext = path.extname(file.originalname);
-        const name = Date.now() + "-" + file.fieldname + ext;
-        cb(null, name);
+
+        // 👉 VIDEO
+        if (file.fieldname === "banner") {
+            return {
+                folder: "posts/images",
+                allowed_formats: ["jpg", "png", "jpeg", "webp"],
+                resource_type: "image"
+            };
+        }
     }
 });
-
-//  File Filter
-const fileFilter = (req, file, cb) => {
-    if (file.fieldname === "photo" && !file.mimetype.startsWith("image/")) {
-        return cb(new Error("Only image allowed"), false);
-    }
-    if (file.fieldname === "banner" && !file.mimetype.startsWith("image/")) {
-        return cb(new Error("Only image allowed"), false);
-    }
-    cb(null, true);
-};
 
 //  Multer Upload
 export const upload = multer({
     storage,
-    limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
-    fileFilter
+    limits: { fileSize: 100 * 1024 * 1024 } // 100MB
 });
 
 //  Create SubCategory API
@@ -43,16 +41,12 @@ export const createSubCategory = async (req, res) => {
         let body = { ...req.body };
 
         if (req.files) {
-            const baseUrl = req.protocol + "://" + req.get("host");
-
             if (req.files.photo) {
-                body.photo =
-                    baseUrl + "/" + req.files.photo[0].path.replace(/\\/g, "/");
+                body.photo = req.files.photo[0].path; // Cloudinary URL
             }
 
             if (req.files.banner) {
-                body.banner =
-                    baseUrl + "/" + req.files.banner[0].path.replace(/\\/g, "/");
+                body.banner = req.files.banner[0].path; // Cloudinary URL
             }
         }
 

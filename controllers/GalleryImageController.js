@@ -1,36 +1,29 @@
 import GalleryImage from "../models/GalleryImage.js";
 import multer from "multer";
-import path from "path";
+import { CloudinaryStorage } from "multer-storage-cloudinary";
+import cloudinary from "../config/cloudinary.js";
 
-// Storage Config
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        if (file.fieldname === "image_path") {
-            cb(null, "uploads/image_path/");
-        } else {
-            cb(null, "uploads/");
+//  Single Storage for both image + video
+const storage = new CloudinaryStorage({
+    cloudinary,
+    params: async (req, file) => {
+
+        // 👉 IMAGE
+        if (file.fieldname === "photo") {
+            return {
+                folder: "posts/images",
+                allowed_formats: ["jpg", "png", "jpeg", "webp"],
+                resource_type: "image"
+            };
         }
-    },
-    filename: (req, file, cb) => {
-        const ext = path.extname(file.originalname);
-        const name = Date.now() + "-" + file.fieldname + ext;
-        cb(null, name);
+
     }
 });
 
-// File Filter
-const fileFilter = (req, file, cb) => {
-    if (!file.mimetype.startsWith("image/")) {
-        return cb(new Error("Only images are allowed"), false);
-    }
-    cb(null, true);
-};
-
-// Multer Instance (IMPORTANT)
+//  Multer Upload
 export const upload = multer({
     storage,
-    limits: { fileSize: 50 * 1024 * 1024 },
-    fileFilter
+    limits: { fileSize: 100 * 1024 * 1024 } // 100MB
 });
 
 
@@ -39,17 +32,15 @@ export const upload = multer({
 
 export const createImage = async (req, res) => {
     try {
+
         let body = { ...req.body };
 
-        const baseUrl = req.protocol + "://" + req.get("host");
-
-        // Multiple images
-        if (req.files?.image_path) {
-            body.image_path = req.files.image_path.map(file => {
-                return baseUrl + "/" + file.path.replace(/\\/g, "/");
-            });
+        if (req.files) {
+            if (req.files.image_path) {
+                body.image_path = req.files.image_path[0].path; // Cloudinary URL
+            }
         }
-
+        
         const image = new GalleryImage(body);
         const saved = await image.save();
 
