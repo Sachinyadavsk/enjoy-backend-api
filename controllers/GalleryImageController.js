@@ -9,7 +9,7 @@ const storage = new CloudinaryStorage({
     params: async (req, file) => {
 
         // 👉 IMAGE
-        if (file.fieldname === "photo") {
+        if (file.fieldname === "image_path") {
             return {
                 folder: "posts/images",
                 allowed_formats: ["jpg", "png", "jpeg", "webp"],
